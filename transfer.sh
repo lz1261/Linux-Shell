@@ -40,7 +40,7 @@ for number in ${numberArr[@]}; do
     include='*.*.'$date'.*.*.*'
     echo "include" \"$include\"
     AWSS3BackupRoute=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix'BKUP/'$number'/'$date'/'
-    aws s3 mv $AWSS3Route $AWSS3BackupRoute --profile $AWSProfile --recursive --include \"$include\"
+    aws s3 mv $AWSS3Route $AWSS3BackupRoute --profile $AWSProfile --recursive --exclude "*" --include \"$include\"
   done
   
 
