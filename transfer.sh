@@ -1,29 +1,46 @@
 #!/bin/bash
-arr=$1
+numberArr=$1
+
 cd /tmp
-for number in ${arr[@]}; do
+
+# AWS Information
+AWSProfile='frcn-tp-prod'
+AWSS3FileRoutePrefix='s3://test-production-bjn-teamworkretail'
+AWSS3FileRouteMidfix='/UQ/CN/'
+AWSS3FileRouteSuffix='/sales/'
+
+# Tencent Information
+TencentProfile='/var/lib/jenkins/tabletpos-s3-cos-copy.conf'
+TencentCOSFileRoutePrefix='UQ/CN/'
+TencentCOSFileRouteSuffix='/sales'
+
+for number in ${numberArr[@]}; do
   echo "current Store Number: " $number
 
   # Download File from AWS S3
-  AWSS3Route='s3://fr-production-bjn-teamworkretail/UQ/CN/'$number'/sales/'
-  HostRoute=$number'/sales/'
-  aws s3 cp $AWSS3Route $HostRoute --profile frcn-tp-prod --recursive
+  AWSS3Route=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix$number$AWSS3FileRouteSuffix
+  HostRoute=$number$AWSS3FileRouteSuffix
+  aws s3 cp $AWSS3Route $HostRoute --profile $AWSProfile --recursive
  
   # Upload File to Tencent COS
-  TencentCOSRoute='UQ/CN/'$number'/sales'      
-  coscmd -c '/var/lib/jenkins/tabletpos-s3-cos-copy.conf'  upload -r $HostRoute $TencentCOSRoute
+  TencentCOSRoute=$TencentCOSFileRoutePrefix$number$TencentCOSFileRouteSuffix     
+  coscmd -c $TencentProfile upload -r $HostRoute $TencentCOSRoute
  
-  # Get File Date
-  for fileName in $(ls $HostRoute); do
+  # Remove HostFile
+  rm -rf $number 
 
-    AWSS3FileRoute=$AWSS3Route$fileName
-    AWSS3FileDate=`aws s3 ls $AWSS3FileRoute --profile frcn-tp-prod | awk '{print $1}' | sed 's/-//g'`
-    
-    AWSS3BackupRoute='s3://fr-production-bjn-teamworkretail/UQ/CN/BKUP/0260/'$AWSS3FileDate'/'
-    aws s3 mv $AWSS3FileRoute $AWSS3BackupRoute --profile frcn-tp-prod
- 
+  # Backup File
+  AWSS3BackupRoute=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix'BKUP/'$number'/'$AWSS3FileDate'/'
+
+  currentDate=$(date -d now +%Y%m%d)
+  yesterdayDate=$(date -d yesterday +"%Y%m%d")
+  tomorrowDate=$(date -d tomorrow +"%Y%m%d")
+
+  arrayDate=($currentDate $yesterdayDate $tomorrowDate)
+  for date in ${arrayDate[@]};do
+    include='*.*.'$date'.*.*.*'
+    aws s3 mv $AWSS3Route $AWSS3BackupRoute --profile $AWSProfile --recursive --include $include
   done
-
-  rm -rf $number  
+  
 
 done
