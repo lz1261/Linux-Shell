@@ -30,7 +30,6 @@ for number in ${numberArr[@]}; do
   rm -rf $number 
 
   # Backup File
-  AWSS3BackupRoute=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix'BKUP/'$number'/'$AWSS3FileDate'/'
 
   currentDate=$(date -d now +%Y%m%d)
   yesterdayDate=$(date -d yesterday +"%Y%m%d")
@@ -39,6 +38,7 @@ for number in ${numberArr[@]}; do
   arrayDate=($currentDate $yesterdayDate $tomorrowDate)
   for date in ${arrayDate[@]};do
     include='*.*.'$date'.*.*.*'
+    AWSS3BackupRoute=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix'BKUP/'$number'/'$date'/'
     aws s3 mv $AWSS3Route $AWSS3BackupRoute --profile $AWSProfile --recursive --include $include
   done
   
