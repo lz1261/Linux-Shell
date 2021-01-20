@@ -36,7 +36,9 @@ for number in ${numberArr[@]}; do
 
   arrayDate=($currentDate $yesterdayDate)
   for date in ${arrayDate[@]};do
+    echo "current date" $date
     include='*.*.'$date'.*.*.*'
+    echo "include" $include
     AWSS3BackupRoute=$AWSS3FileRoutePrefix$AWSS3FileRouteMidfix'BKUP/'$number'/'$date'/'
     aws s3 mv $AWSS3Route $AWSS3BackupRoute --profile $AWSProfile --recursive --include \"$include\"
   done
